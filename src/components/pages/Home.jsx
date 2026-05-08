@@ -1,73 +1,89 @@
 import React, { useState, useEffect } from 'react';
-import UserTable from '../UserTable'; // มั่นใจว่าสร้างไฟล์นี้ไว้ใน src/components/ นะครับ
+import UserTable from '../UserTable';
+import AdminForm from '../AdminForm';
 
 const Home = () => {
-  // 1. State สำหรับสลับหน้า (User/Admin)
   const [sector, setSector] = useState("");
-  
-  // 2. State สำหรับเก็บข้อมูลที่ดึงมาจาก API
   const [members, setMembers] = useState([]);
 
-  // 3. ฟังก์ชันดึงข้อมูลจาก API (จะทำงานครั้งเดียวตอนเปิดหน้าเว็บ)
+  const fetchMembers = async () => {
+    try {
+      const response = await fetch("https://67eca027aa794fb3222e43e2.mockapi.io/members");
+      const data = await response.json();
+      setMembers(data);
+    } catch (error) {
+      console.error("Fetch error:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("https://67eca027aa794fb3222e43e2.mockapi.io/members");
-        const data = await response.json();
-        setMembers(data); // เก็บข้อมูลลงใน State members
-      } catch (error) {
-        console.error("ดึงข้อมูลไม่สำเร็จ:", error);
-      }
-    };
-    fetchData();
+    fetchMembers();
   }, []);
 
-  // ฟังก์ชันช่วยแสดงชื่อหัวข้อตามปุ่มที่กด
-  const getHeaderTitle = () => {
-    if (sector === "user") return "Home - User Sector";
-    if (sector === "admin") return "Home - Admin Sector";
-    return "React - Assessment";
+  const handleCreate = async (newData) => {
+    try {
+      const response = await fetch("https://67eca027aa794fb3222e43e2.mockapi.io/members", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newData)
+      });
+      if (response.ok) fetchMembers();
+    } catch (error) {
+      console.error("Create error:", error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`https://67eca027aa794fb3222e43e2.mockapi.io/members/${id}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) fetchMembers();
+    } catch (error) {
+      console.error("Delete error:", error);
+    }
   };
 
   return (
-    <div className="bg-neutral-lighter min-h-screen p-10 text-center font-kanit">
-      {/* หัวข้อ */}
-      <h1 className="text-4xl font-bold mb-10 text-content-darker">
-        Generation Thailand <br />
-        {getHeaderTitle()}
-      </h1>
+    <div className="min-h-screen w-full flex flex-col justify-center items-center bg-neutral-lighter p-10">
+      <div className="w-full max-w-6xl">
+        
+        {/* หัวข้อ */}
+        <h1 className="text-5xl font-black mb-4 text-content-darker">
+          Generation Thailand
+        </h1>
+        <h2 className="text-2xl font-bold mb-12 text-content-main">
+          {sector === "user" ? "Home - User Sector" : sector === "admin" ? "Home - Admin Sector" : "React - Assessment"}
+        </h2>
 
-      {/* ปุ่มกด 2 ปุ่ม */}
-      <div className="flex justify-center gap-8 mb-10">
-        <button 
-          onClick={() => setSector("user")}
-          className="button button-primary px-8 py-4 bg-white text-black rounded-lg shadow-md hover:bg-neutral-base transition-all font-bold"
-        >
-          User Home Sector
-        </button>
+        <div className="flex justify-center gap-8 mb-16">
+          <button 
+            onClick={() => setSector("user")}
+            className="px-10 py-4 bg-white text-content-darker rounded-2xl shadow-lg border border-neutral-base font-bold hover:bg-primary-base hover:text-white transition-all active:scale-95"
+          >
+            User Home Sector
+          </button>
 
-        <button 
-          onClick={() => setSector("admin")}
-          className="button button-primary px-8 py-4 bg-white text-black rounded-lg shadow-md hover:bg-neutral-base transition-all font-bold"
-        >
-          Admin Home Sector
-        </button>
-      </div>
+          <button 
+            onClick={() => setSector("admin")}
+            className="px-10 py-4 bg-white text-content-darker rounded-2xl shadow-lg border border-neutral-base font-bold hover:bg-primary-base hover:text-white transition-all active:scale-95"
+          >
+            Admin Home Sector
+          </button>
+        </div>
 
-      <div className="mt-10 max-w-4xl mx-auto">
-        {sector === "user" && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">User List</h2>
-            <UserTable data={members} />
-          </div>
-        )}
-
-        {sector === "admin" && (
-          <div className="p-10 border-2 border-dashed border-neutral-base rounded-lg">
-            <h2 className="text-2xl font-bold mb-4">Admin Management</h2>
-            <p className="text-neutral-dark">ทำ Form เพิ่ม/ลบ ข้อมูล</p>
-          </div>
-        )}
+        {/* ส่วนแสดงตาราง/ฟอร์ม */}
+        <div className="w-full">
+          {sector === "user" && <UserTable data={members} />}
+          
+          {sector === "admin" && (
+            <AdminForm 
+              data={members} 
+              onCreate={handleCreate} 
+              onDelete={handleDelete} 
+            />
+          )}
+        </div>
       </div>
     </div>
   );
