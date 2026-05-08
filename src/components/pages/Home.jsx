@@ -1,8 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import UserTable from '../UserTable'; // มั่นใจว่าสร้างไฟล์นี้ไว้ใน src/components/ นะครับ
 
 const Home = () => {
-  // สร้าง State ชื่อ sector เพื่อเก็บค่าว่าเลือกกลุ่มไหน (ค่าเริ่มต้นเป็นว่าง)
+  // 1. State สำหรับสลับหน้า (User/Admin)
   const [sector, setSector] = useState("");
+  
+  // 2. State สำหรับเก็บข้อมูลที่ดึงมาจาก API
+  const [members, setMembers] = useState([]);
+
+  // 3. ฟังก์ชันดึงข้อมูลจาก API (จะทำงานครั้งเดียวตอนเปิดหน้าเว็บ)
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("https://67eca027aa794fb3222e43e2.mockapi.io/members");
+        const data = await response.json();
+        setMembers(data); // เก็บข้อมูลลงใน State members
+      } catch (error) {
+        console.error("ดึงข้อมูลไม่สำเร็จ:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   // ฟังก์ชันช่วยแสดงชื่อหัวข้อตามปุ่มที่กด
   const getHeaderTitle = () => {
@@ -13,7 +31,7 @@ const Home = () => {
 
   return (
     <div className="bg-neutral-lighter min-h-screen p-10 text-center font-kanit">
-      {/* หัวข้อที่จะเปลี่ยนไปตาม State */}
+      {/* หัวข้อ */}
       <h1 className="text-4xl font-bold mb-10 text-content-darker">
         Generation Thailand <br />
         {getHeaderTitle()}
@@ -36,13 +54,19 @@ const Home = () => {
         </button>
       </div>
 
-      {/* ส่วนแสดงเนื้อหาตามเงื่อนไข (เดี๋ยวเราจะเอาตารางมาใส่ตรงนี้) */}
-      <div className="mt-10">
+      <div className="mt-10 max-w-4xl mx-auto">
         {sector === "user" && (
-          <p className="text-neutral-dark">--- กำลังรอแสดงตารางรายชื่อ (User) ---</p>
+          <div>
+            <h2 className="text-2xl font-bold mb-4">User List</h2>
+            <UserTable data={members} />
+          </div>
         )}
+
         {sector === "admin" && (
-          <p className="text-neutral-dark">--- กำลังรอแสดงฟอร์มและปุ่มลบ (Admin) ---</p>
+          <div className="p-10 border-2 border-dashed border-neutral-base rounded-lg">
+            <h2 className="text-2xl font-bold mb-4">Admin Management</h2>
+            <p className="text-neutral-dark">ทำ Form เพิ่ม/ลบ ข้อมูล</p>
+          </div>
         )}
       </div>
     </div>
